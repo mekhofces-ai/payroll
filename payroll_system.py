@@ -7401,7 +7401,14 @@ VIEWER_PAGES = {
 
 def main() -> None:
     st.set_page_config(page_title=APP_NAME, page_icon="P", layout="wide")
-    init_app()
+    try:
+        init_app()
+    except Exception as e:
+        import traceback
+        st.error(f"App initialization failed: {e}")
+        with st.expander("Full error"):
+            st.code(traceback.format_exc())
+        st.stop()
     if not st.session_state.get("authenticated"):
         apply_theme()
         login_page()
