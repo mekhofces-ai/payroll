@@ -1737,12 +1737,12 @@ def run_migrations() -> None:
                 VALUES (?, ?, ?, 0.11, 0.1875, 2600, 16700, 2600, 16700, 11, 18.75,
                         'Employee Insurance Salary/Base', 'Active', 'Editable Egyptian social insurance default')
                 ON CONFLICT(effective_year) DO UPDATE SET
-                    minimum_insurance_salary = CASE WHEN notes LIKE 'Editable seed%' OR notes IS NULL THEN 2600 ELSE COALESCE(minimum_insurance_salary, 2600) END,
-                    maximum_insurance_salary = CASE WHEN notes LIKE 'Editable seed%' OR notes IS NULL THEN 16700 ELSE COALESCE(maximum_insurance_salary, 16700) END,
-                    employee_share_percent = CASE WHEN notes LIKE 'Editable seed%' OR notes IS NULL THEN 11 ELSE COALESCE(employee_share_percent, 11) END,
-                    company_share_percent = CASE WHEN notes LIKE 'Editable seed%' OR notes IS NULL THEN 18.75 ELSE COALESCE(company_share_percent, 18.75) END,
-                    insurance_base_source = COALESCE(insurance_base_source, 'Employee Insurance Salary/Base'),
-                    status = COALESCE(status, 'Active')
+                    minimum_insurance_salary = CASE WHEN social_insurance_setup.notes LIKE 'Editable seed%' OR social_insurance_setup.notes IS NULL THEN 2600 ELSE COALESCE(social_insurance_setup.minimum_insurance_salary, 2600) END,
+                    maximum_insurance_salary = CASE WHEN social_insurance_setup.notes LIKE 'Editable seed%' OR social_insurance_setup.notes IS NULL THEN 16700 ELSE COALESCE(social_insurance_setup.maximum_insurance_salary, 16700) END,
+                    employee_share_percent = CASE WHEN social_insurance_setup.notes LIKE 'Editable seed%' OR social_insurance_setup.notes IS NULL THEN 11 ELSE COALESCE(social_insurance_setup.employee_share_percent, 11) END,
+                    company_share_percent = CASE WHEN social_insurance_setup.notes LIKE 'Editable seed%' OR social_insurance_setup.notes IS NULL THEN 18.75 ELSE COALESCE(social_insurance_setup.company_share_percent, 18.75) END,
+                    insurance_base_source = COALESCE(social_insurance_setup.insurance_base_source, 'Employee Insurance Salary/Base'),
+                    status = COALESCE(social_insurance_setup.status, 'Active')
                 """,
                 (insurance_year, f"{insurance_year}-01-01", f"{insurance_year}-12-31"),
             )

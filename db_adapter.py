@@ -17,11 +17,22 @@ if DATABASE_URL:
     import psycopg2.extras
 
     class Row(dict):
+        _fields: list[str] | None = None
+
         def __getattr__(self, name):
             try:
                 return self[name]
             except KeyError:
                 raise AttributeError(name)
+
+        def __getitem__(self, key):
+            if isinstance(key, (int, slice)):
+                if self._fields is None:
+                    raise IndexError("Row has no fields for index access")
+                if isinstance(key, int):
+                    return super().__getitem__(self._fields[key])
+                return [super().__getitem__(f) for f in self._fields[key]]
+            return super().__getitem__(key)
 
         def keys(self):
             return dict.keys(self)
@@ -78,25 +89,37 @@ if DATABASE_URL:
                 if stmt:
                     self.execute(stmt)
 
+        def _make_row(self, row):
+            cols = [d[0] for d in self.description]
+            r = Row(zip(cols, row))
+            r._fields = cols
+            return r
+
+        def _make_rows(self, rows):
+            cols = [d[0] for d in self.description]
+            result = []
+            for row in rows:
+                r = Row(zip(cols, row))
+                r._fields = cols
+                result.append(r)
+            return result
+
         def fetchone(self):
             row = self._cursor.fetchone()
             if row is not None and self.description:
-                cols = [d[0] for d in self.description]
-                return Row(zip(cols, row))
+                return self._make_row(row)
             return None
 
         def fetchall(self):
             rows = self._cursor.fetchall()
             if rows and self.description:
-                cols = [d[0] for d in self.description]
-                return [Row(zip(cols, row)) for row in rows]
+                return self._make_rows(rows)
             return []
 
         def __iter__(self):
             for row in self._cursor:
                 if self.description:
-                    cols = [d[0] for d in self.description]
-                    yield Row(zip(cols, row))
+                    yield self._make_row(row)
                 else:
                     yield row
 
@@ -208,6 +231,12 @@ if DATABASE_URL:
                 r"\bINSERT\s+OR\s+IGNORE\b", "INSERT", sql, flags=re.IGNORECASE
             )
             sql += " ON CONFLICT DO NOTHING"
+
+        # ?  → %s  (SQLite → psycopg2 parameter style)
+        sql = sql.replace("?", "%s")
+
+        # Escape literal % that are not part of %s (e.g. LIKE patterns)
+        sql = re.sub(r"%(?![s(])", "%%", sql)
 
         return sql
 
