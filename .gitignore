@@ -1,0 +1,8 @@
+*.db
+*.bak
+*.bak_*
+*.err.log
+*.out.log
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
