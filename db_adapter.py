@@ -261,3 +261,12 @@ else:
         conn.row_factory = Row
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
+
+
+# Allow running as entry point (for Streamlit Cloud misconfiguration)
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent))
+    from payroll_system import main as _payroll_main
+    _payroll_main()
