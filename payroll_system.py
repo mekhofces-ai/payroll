@@ -1809,6 +1809,33 @@ def run_migrations() -> None:
             )
         conn.commit()
         seed_current_tax_if_missing(conn)
+        seed_missing_employees(conn)
+
+
+def seed_missing_employees(conn) -> None:
+    for code in ("129029", "129030"):
+        if not conn.execute("SELECT 1 FROM employees WHERE employee_code = ?", [code]).fetchone():
+            if code == "129029":
+                conn.execute(
+                    """INSERT INTO employees (employee_code, organization, sponsor, arabic_name, position,
+                       department, section, default_project_id, hiring_date, new_net_salary, new_allowance,
+                       new_net_earning, status, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT project_id FROM projects WHERE project_name = ?), ?, ?, ?, ?, 'Active', ?)""",
+                    [code, "AFM", "Professional", "طه عبدالله سعدونى متولى", "HVAC Technician",
+                     "Maintenance", "Mechanical", "Chevron", "2026-06-07", 10000, 0, 10000, now_text()],
+                )
+            else:
+                conn.execute(
+                    """INSERT INTO employees (employee_code, organization, sponsor, arabic_name, position,
+                       department, section, default_project_id, hiring_date, new_net_salary, new_allowance,
+                       new_net_earning, status, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT project_id FROM projects WHERE project_name = ?), ?, ?, ?, ?, 'Active', ?)""",
+                    [code, "AFM", "Professional", "عمر خالد عزالدين عمر سليمان", "Janitor",
+                     "Services", "Housekeeping", "Chevron Upstream", "2026-06-07", 5539.83, 1642.94, 7182.77, now_text()],
+                )
+    for code in ("126383", "124139"):
+        conn.execute("UPDATE employees SET status = 'Active', updated_at = ? WHERE employee_code = ? AND status = 'Inactive'", [now_text(), code])
+    conn.commit()
 
 
 def init_app() -> None:
